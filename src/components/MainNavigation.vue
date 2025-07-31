@@ -23,16 +23,31 @@
     </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { Menubar } from "primevue";
-import { ref } from "vue";
+import { onMounted, ref } from "vue";
 import "@/assets/main-navigation.css"
 import { ToggleSwitch } from "primevue";
+import { useLocalStorage } from '@/composables/useLocalStorage';
 
-let checked = ref(false);
+/*THEME SETUP START */
+
+const isDark = useLocalStorage<boolean>('darkMode', false);
+
+let checked = ref(isDark.value);
+
 const toggleDarkMode = () =>  {
+  isDark.value = !isDark.value;
   document.documentElement.classList.toggle('dark-mode');
 }
+
+onMounted(() => {
+  if (isDark.value) {
+    document.documentElement.classList.add('dark-mode')
+  }
+})
+
+/*THEME SETUP END */
 
 const items = ref([
     {
