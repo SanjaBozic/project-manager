@@ -6,8 +6,7 @@
     background: var(--card-background);
     border: var(--card-border);
     border-radius: 10px;
-    margin-bottom: 1rem;
-    padding: 1rem;
+    margin-bottom: none;
 }
 
 .main-nav__title{

@@ -3,4 +3,6 @@ body{
     font-feature-settings: "cv02","cv03","cv04","cv11";
     margin: 0;
     font-size: 14px;
+    padding: 1rem;
 }
+

@@ -1,14 +1,16 @@
 <template>
+
     <div class="card">
         <ContextMenu ref="contextMenu" :model="menuModel" @hide="selectedRow = null" />
-        <DataTable  ref="dt"  :value="products" 
+        <DataTable  ref="dt"  :value="products" dataKey="id" 
             v-model:contextMenuSelection="selectedRow" contextMenu @row-contextmenu="onRowContextMenu" 
             :reorderableColumns="true" @columnReorder="onColReorder" @rowReorder="onRowReorder" 
             :size="'small'" 
-            scrollable scrollHeight="90vh" 
+            scrollable
             removableSort stripedRows 
-            paginator :rows="25" :rowsPerPageOptions="[25, 50, 75, 100]" 
+            paginator :rows="15" :rowsPerPageOptions="[15, 25, 50, 75, 100]" 
             tableStyle="min-width: 50rem"
+            v-model:filters="filters" filterDisplay="menu" :globalFilterFields="['title', 'type', 'state', 'tags','created','id','parent']"
             editMode="cell" @cell-edit-complete="onCellEditComplete"
                 :pt="{
                     table: { style: 'min-width: 50rem' },
@@ -20,11 +22,20 @@
                 }"
         >
             <template #header>
-                <div style="text-align:left">
-                    <MultiSelect :modelValue="selectedColumns" :options="columns" optionLabel="header" @update:modelValue="onToggle"
-                        display="chip" placeholder="Select Columns" />
+                <div class="wi__header-toolbar">
+                    <MultiSelect :modelValue="selectedColumns" :options="columns" optionLabel="header" @update:modelValue="onToggle" display="chip" placeholder="Select Columns" />
+                    <div class="wi__header-toolbar--right">
+                        <Button type="button" icon="pi pi-filter-slash" label="Clear" variant="outlined" @click="clearFilter()" ></Button>
+                        <IconField>
+                            <InputIcon>
+                                <i class="pi pi-search" />
+                            </InputIcon>
+                            <InputText v-model="filters['global'].value" placeholder="Keyword Search" />
+                        </IconField>
+                    </div>
                 </div>
             </template>
+            <template #empty> No data found. </template>
             <template #paginatorstart>
                 <Button type="button" icon="pi pi-refresh" text />
             </template>
@@ -41,66 +52,117 @@
                         <DatePicker v-model="data[field]" autofocus fluid />
                     </template>
                 </template>
+                <template #body="{ data, field }">
+                    <template v-if="field === 'type'">
+                        <Message size="small" :severity="getTypeSeverity(data[field])" :closable="false" variant="simple">
+                            {{ data[field] }}
+                        </Message>
+                    </template>
+                    <template v-else-if="field === 'state'">
+                        <Tag :severity="getSeverity(data[field])" :value="data[field]" />
+                    </template>
+                    <template v-else-if="col.field === 'tags'">
+                        <span class="tag-wrap" style="display: flex; gap: 0.25rem; flex-wrap: wrap;">
+                            <Tag
+                                v-for="(tag, idx) in data[col.field]"
+                                :key="idx"
+                                severity="secondary"
+                                :value="tag"
+                            />
+                        </span>
+                    </template>
+                    <template v-else>
+                        {{ data[field] }}
+                    </template>
+                </template>
+                <template #filter="{ filterModel }">
+                    <InputText v-model="filterModel.value" type="text" placeholder="Search ..." />
+                </template>
             </Column>
         </DataTable>
     </div>
 </template>
 
 <script setup>
-import { Button, Column, ContextMenu, DataTable, DatePicker, InputText, MultiSelect } from 'primevue';
+import { Button, Column, ContextMenu, DataTable, DatePicker, IconField, InputIcon, InputText, Message, MultiSelect, Tag } from 'primevue';
 import { ref } from 'vue';
+import { FilterMatchMode, FilterOperator } from '@primevue/core/api';
+import '../assets/work-items.css'
 
-const products = ref([
-  {
-    id: 101,
-    type: 'PBI',
-    title: 'Implement user authentication',
-    state: 'In Progress',
-    created: '2024-03-10',
-    tags: ['backend', 'security', 'high priority'],
-    sortable: true
-  },
-  {
-    id: 102,
-    type: 'Bug',
-    title: 'Fix broken login redirect',
-    state: 'Open',
-    created: '2024-03-12',
-    tags: ['frontend', 'critical'],
-  },
-  {
-    id: 103,
-    type: 'Task',
-    title: 'Write unit tests for auth module',
-    state: 'Pending Review',
-    created: '2024-03-14',
-    tags: ['testing'],
-  },
-  {
-    id: 104,
-    type: 'PBI',
-    title: 'Add password reset feature',
-    state: 'Completed',
-    created: '2024-03-08',
-    tags: ['backend', 'UX'],
-  },
-  {
-    id: 105,
-    type: 'Bug',
-    title: 'Crash when uploading large files',
-    state: 'Open',
-    created: '2024-03-11',
-    tags: ['file upload', 'bug'],
-  },
-  {
-    id: 106,
-    type: 'Task',
-    title: 'Update project documentation',
-    state: 'In Progress',
-    created: '2024-03-15',
-    tags: ['documentation'],
-  },
-])
+// add dummy data
+const products = ref([]);
+const types = [
+  'PBI',           // Product Backlog Item
+  'Bug',           // An error or flaw in the systemž
+  'Defect',        // A confirmed problem in the product that needs correction
+  'Task',          // A unit of work to be completed
+  'Feature',       // A new functional addition
+  'Enhancement',   // An upgrade or polish to existing behavior
+  'Epic',          // Large bodies of work broken into smaller stories
+  'Story',         // User-focused requirement
+  'Spike',         // Exploration task to learn or evaluate
+  'Hotfix',        // Emergency bug fix
+  'Refactor',      // Internal code cleanup
+  'Research',      // Investigation task
+  'Documentation'  // Update manuals, guides, etc.
+];
+
+const states = [
+    'Open',
+    'In Progress',
+    'Pending Review',
+    'Done',
+    'On Hold',
+    'Deployed',
+    'Removed',
+];
+
+const sampleTitles = [
+    'Implement user authentication',
+    'Fix broken login redirect',
+    'Write unit tests for auth module',
+    'Add password reset feature',
+    'Crash when uploading large files',
+    'Update project documentation'
+];
+const sampleTags = [
+    ['backend', 'security'],
+    ['frontend', 'critical'],
+    ['testing'],
+    ['UX', 'backend'],
+    ['bug', 'file upload'],
+    ['documentation']
+];
+
+const getRandomDate = (start, end) => {
+    const date = new Date(+start + Math.random() * (end - start));
+    return date.toISOString().split('T')[0]; 
+};
+
+const startDate = new Date('2025-01-01');
+const endDate = new Date('2025-08-31');
+
+// Generate 100 dummy items
+for (let i = 0; i < 100; i++) {
+    const randomIndex = (arr) => Math.floor(Math.random() * arr.length);
+    
+    // randomly assign a parentId from existing ids (with some nulls)
+    const possibleParentIds = products.value.map(p => p.id);
+    const parentId = Math.random() < 0.5 && possibleParentIds.length > 0 
+        ? possibleParentIds[randomIndex(possibleParentIds)] 
+        : null;
+
+    products.value.push({
+        id: 100 + i,
+        type: types[randomIndex(types)],
+        title: sampleTitles[randomIndex(sampleTitles)],
+        state: states[randomIndex(states)],
+        created: getRandomDate(startDate, endDate),
+        tags: sampleTags[randomIndex(sampleTags)],
+        parent: parentId,
+        sortable: true
+    });
+}
 
 const columns = ref([
     { field: 'id', header: 'Id' },
@@ -108,8 +170,74 @@ const columns = ref([
     { field: 'title', header: 'Title' },
     { field: 'state', header: 'State' },
     { field: 'created', header: 'Created' },
+    { field: 'parent', header: 'Parent Id' },
     { field: 'tags', header: 'Tags' },
 ]);
+
+// status render tags
+
+const getSeverity = (status) => {
+    switch (status) {
+        case 'Open': return 'secondary';
+        case 'In Progress': return 'info';
+        case 'Pending Review': return 'warn';
+        case 'Done': return 'success';
+        case 'On Hold': return 'contrast';
+        case 'Deployed': return 'primary';
+        case 'Removed': return 'danger';
+        default: return 'secondary'; // Fallback
+    }
+};
+
+// type render as messages
+
+const typeSeverityMap = {
+  'Feature': 'warn',
+  'Epic': 'warn',
+  'Story': 'warn',
+
+  'PBI': 'info',
+  'Task': 'info',
+
+  'Enhancement': 'secondary',
+  'Spike': 'secondary',
+
+  'Documentation': 'contrast',
+  'Research': 'contrast',
+  'Refactor': 'contrast',
+
+  'Bug': 'error',
+  'Defect': 'error',
+  'Hotfix': 'error'
+};
+
+const getTypeSeverity = (type) => {
+  return typeSeverityMap[type] || 'secondary'; // fallback for undefined types
+};
+
+// filters global and each column 
+
+const filters = ref();
+
+const initFilters = () => {
+    filters.value = {
+        global: { value: null, matchMode: FilterMatchMode.CONTAINS },
+        id: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
+        title: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
+        type: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
+        state: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
+        tags: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
+        parent: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
+        created: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.DATE_IS }] },
+    };
+};
+
+initFilters();
+
+const clearFilter = () => {
+    initFilters();
+    selectedColumns.value = [...columns.value]; // Reset to show all columns
+};
 
 // edit mode
 const onCellEditComplete = (event) => {
@@ -117,11 +245,22 @@ const onCellEditComplete = (event) => {
 
     switch (field) {
         default:
-            if (newValue.trim().length > 0) data[field] = newValue;
-            else event.preventDefault();
+            if (typeof newValue === 'string') {
+                if (newValue.trim().length > 0) {
+                    data[field] = newValue;
+                } else {
+                    event.preventDefault();
+                }
+            } else if (newValue !== null && newValue !== undefined) {
+                // Accept non-string valid data (e.g., Date, tags array)
+                data[field] = newValue;
+            } else {
+                event.preventDefault();
+            }
             break;
     }
 };
+
 
 // hide-show rows
 const selectedColumns = ref(columns.value);
