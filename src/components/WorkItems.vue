@@ -1,88 +1,3 @@
-<template>
-
-    <div class="card">
-        <ContextMenu ref="contextMenu" :model="menuModel" @hide="selectedRow = null" />
-        <DataTable  ref="dt"  :value="products" dataKey="id" 
-            v-model:contextMenuSelection="selectedRow" contextMenu @row-contextmenu="onRowContextMenu" 
-            :reorderableColumns="true" @columnReorder="onColReorder" @rowReorder="onRowReorder" 
-            :size="'small'" 
-            scrollable
-            removableSort stripedRows 
-            paginator :rows="15" :rowsPerPageOptions="[15, 25, 50, 75, 100]" 
-            tableStyle="min-width: 50rem"
-            v-model:filters="filters" filterDisplay="menu" :globalFilterFields="['title', 'type', 'state', 'tags','created','id','parent']"
-            editMode="cell" @cell-edit-complete="onCellEditComplete"
-                :pt="{
-                    table: { style: 'min-width: 50rem' },
-                    column: {
-                        bodycell: ({ state }) => ({
-                            class: [{ '!py-0': state['d_editing'] }]
-                        })
-                    }
-                }"
-        >
-            <template #header>
-                <div class="wi__header-toolbar">
-                    <MultiSelect :modelValue="selectedColumns" :options="columns" optionLabel="header" @update:modelValue="onToggle" display="chip" placeholder="Select Columns" />
-                    <div class="wi__header-toolbar--right">
-                        <Button type="button" icon="pi pi-filter-slash" label="Clear" variant="outlined" @click="clearFilter()" ></Button>
-                        <IconField>
-                            <InputIcon>
-                                <i class="pi pi-search" />
-                            </InputIcon>
-                            <InputText v-model="filters['global'].value" placeholder="Keyword Search" />
-                        </IconField>
-                    </div>
-                </div>
-            </template>
-            <template #empty> No data found. </template>
-            <template #paginatorstart>
-                <Button type="button" icon="pi pi-refresh" text />
-            </template>
-            <template #paginatorend>
-                <Button type="button" icon="pi pi-download" text @click="exportCSV($event)" />
-            </template>
-            <Column rowReorder headerStyle="width: 3rem" :reorderableColumn="false" />
-            <Column v-for="(col, index) of selectedColumns" :key="col.field + '_' + index" :field="col.field" :header="col.header" sortable>
-                <template #editor="{ data, field }">
-                    <template v-if="field !== 'created'">
-                        <InputText v-model="data[field]" autofocus fluid />
-                    </template>
-                    <template v-else>
-                        <DatePicker v-model="data[field]" autofocus fluid />
-                    </template>
-                </template>
-                <template #body="{ data, field }">
-                    <template v-if="field === 'type'">
-                        <Message size="small" :severity="getTypeSeverity(data[field])" :closable="false" variant="simple">
-                            {{ data[field] }}
-                        </Message>
-                    </template>
-                    <template v-else-if="field === 'state'">
-                        <Tag :severity="getSeverity(data[field])" :value="data[field]" />
-                    </template>
-                    <template v-else-if="col.field === 'tags'">
-                        <span class="tag-wrap" style="display: flex; gap: 0.25rem; flex-wrap: wrap;">
-                            <Tag
-                                v-for="(tag, idx) in data[col.field]"
-                                :key="idx"
-                                severity="secondary"
-                                :value="tag"
-                            />
-                        </span>
-                    </template>
-                    <template v-else>
-                        {{ data[field] }}
-                    </template>
-                </template>
-                <template #filter="{ filterModel }">
-                    <InputText v-model="filterModel.value" type="text" placeholder="Search ..." />
-                </template>
-            </Column>
-        </DataTable>
-    </div>
-</template>
-
 <script setup>
 import { Button, Column, ContextMenu, DataTable, DatePicker, IconField, InputIcon, InputText, Message, MultiSelect, Tag } from 'primevue';
 import { ref } from 'vue';
@@ -307,3 +222,85 @@ const deleteRow = (data) => {
 };
 
 </script>
+
+<template>
+
+    <div class="card">
+        <ContextMenu ref="contextMenu" :model="menuModel" @hide="selectedRow = null" />
+        <DataTable  ref="dt"  :value="products" dataKey="id" 
+            v-model:contextMenuSelection="selectedRow" contextMenu @row-contextmenu="onRowContextMenu" 
+            :reorderableColumns="true" @columnReorder="onColReorder" @rowReorder="onRowReorder" 
+            :size="'small'" 
+            scrollable
+            removableSort stripedRows 
+            paginator :rows="15" :rowsPerPageOptions="[15, 25, 50, 75, 100]" 
+            tableStyle="min-width: 50rem"
+            v-model:filters="filters" filterDisplay="menu" :globalFilterFields="['title', 'type', 'state', 'tags','created','id','parent']"
+            editMode="cell" @cell-edit-complete="onCellEditComplete"
+                :pt="{
+                    table: { style: 'min-width: 50rem' },
+                    column: {
+                        bodycell: ({ state }) => ({
+                            class: [{ '!py-0': state['d_editing'] }]
+                        })
+                    }
+                }"
+        >
+            <template #header>
+                <div class="wi__header-toolbar">
+                    <MultiSelect :modelValue="selectedColumns" :options="columns" optionLabel="header" @update:modelValue="onToggle" display="chip" placeholder="Select Columns" />
+                    <div class="wi__header-toolbar--right">
+                        <Button type="button" icon="pi pi-filter-slash" label="Clear" variant="outlined" @click="clearFilter()" ></Button>
+                        <IconField>
+                            <InputIcon>
+                                <i class="pi pi-search" />
+                            </InputIcon>
+                            <InputText v-model="filters['global'].value" placeholder="Keyword Search" />
+                        </IconField>
+                    </div>
+                </div>
+            </template>
+            <template #empty> No data found. </template>
+            <template #paginatorstart>
+                <Button type="button" icon="pi pi-download" text @click="exportCSV($event)" />
+            </template>
+            <Column rowReorder headerStyle="width: 3rem" :reorderableColumn="false" />
+            <Column v-for="(col, index) of selectedColumns" :key="col.field + '_' + index" :field="col.field" :header="col.header" sortable>
+                <template #editor="{ data, field }">
+                    <template v-if="field !== 'created'">
+                        <InputText v-model="data[field]" autofocus fluid />
+                    </template>
+                    <template v-else>
+                        <DatePicker v-model="data[field]" autofocus fluid />
+                    </template>
+                </template>
+                <template #body="{ data, field }">
+                    <template v-if="field === 'type'">
+                        <Message size="small" :severity="getTypeSeverity(data[field])" :closable="false" variant="simple">
+                            {{ data[field] }}
+                        </Message>
+                    </template>
+                    <template v-else-if="field === 'state'">
+                        <Tag :severity="getSeverity(data[field])" :value="data[field]" />
+                    </template>
+                    <template v-else-if="col.field === 'tags'">
+                        <span class="tag-wrap" style="display: flex; gap: 0.25rem; flex-wrap: wrap;">
+                            <Tag
+                                v-for="(tag, idx) in data[col.field]"
+                                :key="idx"
+                                severity="secondary"
+                                :value="tag"
+                            />
+                        </span>
+                    </template>
+                    <template v-else>
+                        {{ data[field] }}
+                    </template>
+                </template>
+                <template #filter="{ filterModel }">
+                    <InputText v-model="filterModel.value" type="text" placeholder="Search ..." />
+                </template>
+            </Column>
+        </DataTable>
+    </div>
+</template>
