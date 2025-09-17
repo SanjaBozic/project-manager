@@ -1,10 +1,10 @@
 
 <script setup lang="ts">
 import { Menubar } from "primevue";
-import { onMounted, ref } from "vue";
+import { ref } from "vue";
 import "@/assets/main-navigation.css"
 import { ToggleSwitch } from "primevue";
-import { MENU_ITEMS, MenuKey } from '@/data/menuItems.ts';
+import { MENU_ITEMS } from '@/data/menuItems.ts';
 import { useTheme } from '@/composables/useTheme';
 
 const { checked } = useTheme();

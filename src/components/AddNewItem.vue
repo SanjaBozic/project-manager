@@ -4,7 +4,7 @@ import ItemForm from "./ItemForm.vue";
 </script>
 
 <template>
-    <div class="card">
+    <div style="width: fit-content;">
         <Fieldset legend="Add new">
             <ItemForm />
         </Fieldset>
