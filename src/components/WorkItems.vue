@@ -2,7 +2,7 @@
 import { Button, Column, ContextMenu, DataTable, DatePicker, IconField, InputIcon, InputText, Message, MultiSelect, Tag } from 'primevue';
 import { ref } from 'vue';
 import { FilterMatchMode, FilterOperator } from '@primevue/core/api';
-import '../assets/work-items.css'
+import '../assets/style/work-items.css'
 
 // add dummy data
 const products = ref([]);

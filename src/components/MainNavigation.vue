@@ -2,13 +2,13 @@
 <script setup lang="ts">
 import { Menubar } from "primevue";
 import { ref } from "vue";
-import "@/assets/main-navigation.css"
+import "@/assets/style/main-navigation.css"
 import { ToggleSwitch } from "primevue";
 import { MENU_ITEMS } from '@/data/menuItems.ts';
 import { useTheme } from '@/composables/useTheme';
 
 const { checked } = useTheme();
-const items = ref(MENU_ITEMS);
+const items = ref([...MENU_ITEMS]);
 </script>
 
 <template>

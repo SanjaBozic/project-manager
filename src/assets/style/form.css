@@ -1,0 +1,53 @@
+.form__layout {
+  max-width: 1100px;
+  display: flex;
+  gap: 1.5rem;
+  align-items: flex-start;
+}
+
+.form__actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 0.75rem;
+}
+
+.form-column__title {
+  margin: 0 0 0.75rem;
+}
+
+.form-column__grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.form-column__stack {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.form-column--wide {
+  flex: 1 1 520px;
+  min-width: 360px;
+}
+
+.form-column--narrow {
+  flex: 1 1 480px;
+  min-width: 320px;
+}
+
+.form-column__field--half {
+  flex: 1 1 calc(50% - 0.5rem);
+  min-width: 160px;
+}
+
+.form-column__field--full {
+  width: 100%;
+}
+
+.form-column__description-label {
+  margin-bottom: 6px;
+  font-weight: 600;
+  color: #333;
+}

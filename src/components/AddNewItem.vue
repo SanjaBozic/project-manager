@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import Fieldset from 'primevue/fieldset';
-import ItemForm from "./ItemForm.vue";
+import FormWrapper from "./form/FormWrapper.vue";
 </script>
 
 <template>
     <div style="width: fit-content;">
         <Fieldset legend="Add new">
-            <ItemForm />
+            <FormWrapper />
         </Fieldset>
     </div>
 </template>
