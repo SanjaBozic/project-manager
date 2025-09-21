@@ -6,6 +6,11 @@ import FormColumn from './FormColumn.vue'
 import { LEFT_FIELDS, DETAILS_FIELDS } from '@/data/formFields'
 import type { FieldDef } from '@/data/formFields'
 import '@/assets/style/form.css'
+import { useFormCache } from '@/composables/useFormCache'
+
+defineProps<{
+  visible: boolean
+}>()
 
 const leftFields = ref([...LEFT_FIELDS])
 const detailsFields = ref([...DETAILS_FIELDS])
@@ -31,10 +36,21 @@ const validation = ({ values }: any) => {
   return { values, errors }
 }
 
-const onFormSave = ({ valid, values }: any) => {
-  if (valid) {
-    console.log('Saving', values)
-  }
+const { save: saveToCache } = useFormCache<Record<string, any>>('workItems')
+const emit = defineEmits<{
+  (e: 'update:visible', value: boolean): void
+}>()
+
+const onFormSave = ({ valid, values }: { valid: boolean; values: Record<string, any> }) => {
+  if (!valid) return
+
+  saveToCache(values)
+  console.log('Saved to cache:', values)
+  emit('update:visible', false) // close the dialog
+}
+
+const onFormCancel = () => {
+  emit('update:visible', false) // close the dialog
 }
 </script>
 
@@ -57,7 +73,8 @@ const onFormSave = ({ valid, values }: any) => {
       />
     </div>
     <div class="form__actions">
-      <Button type="submit" severity="secondary" label="Save" />
+      <Button severity="secondary" label="Cancel" @click="onFormCancel"/>
+      <Button type="submit" label="Save" />
     </div>
   </Form>
 </template>

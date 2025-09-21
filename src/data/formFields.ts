@@ -1,4 +1,3 @@
-// formFields.ts
 export const TYPES = [
     'PBI','Bug','Defect','Task','Feature','Enhancement','Epic','Story','Spike','Hotfix','Refactor','Research','Documentation'
 ] as const;
@@ -6,6 +5,40 @@ export const TYPES = [
 export const STATES = [
     'Open','In Progress','Pending Review','Done','On Hold','Deployed','Removed'
 ] as const;
+
+export const TYPE_COLOR_MAP: Record<(typeof TYPES)[number], string> = {
+  PBI: 'info',
+  Bug: 'error',
+  Defect: 'error',
+  Task: 'info',
+  Feature: 'warn',
+  Enhancement: 'secondary',
+  Epic: 'warn',
+  Story: 'warn',
+  Spike: 'secondary',
+  Hotfix: 'error',
+  Refactor: 'contrast',
+  Research: 'contrast',
+  Documentation: 'contrast'
+}
+
+export const STATE_COLOR_MAP: Record<(typeof STATES)[number], string> = {
+  'Open': 'secondary',
+  'In Progress': 'info',
+  'Pending Review': 'warn',
+  'Done': 'success',
+  'On Hold': 'contrast',
+  'Deployed': 'primary',
+  'Removed': 'danger'
+}
+
+export function getTypeColor(type: string): string {
+  return TYPE_COLOR_MAP[type as keyof typeof TYPE_COLOR_MAP] ?? 'secondary'
+}
+
+export function getStateColor(state: string): string {
+  return STATE_COLOR_MAP[state as keyof typeof STATE_COLOR_MAP] ?? 'secondary'
+}
 
 export const ACTIVITY_OPTIONS = [
     'Design','Development','Documentation','Testing','Requirements','Deployment'

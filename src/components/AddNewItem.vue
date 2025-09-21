@@ -1,12 +1,28 @@
 <script setup lang="ts">
-import Fieldset from 'primevue/fieldset';
-import FormWrapper from "./form/FormWrapper.vue";
+import { Dialog } from 'primevue'
+import FormWrapper from './form/FormWrapper.vue'
+
+defineProps<{
+  visible: boolean
+}>()
+
+const emit = defineEmits<{
+  (e: 'update:visible', value: boolean): void
+}>()
+
 </script>
 
 <template>
-    <div style="width: fit-content;">
-        <Fieldset legend="Add new">
-            <FormWrapper />
-        </Fieldset>
-    </div>
+  <div>
+    <Dialog
+        :visible="visible"
+        @update:visible="emit('update:visible', $event)"
+        modal
+        header="Add New Work Item"
+        :style="{ width: '1200px' }"
+        >
+    <FormWrapper :visible="visible" @update:visible="emit('update:visible', $event)" />
+    </Dialog>
+  </div>
 </template>
+
