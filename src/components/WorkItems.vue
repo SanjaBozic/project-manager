@@ -1,129 +1,106 @@
 <script setup lang="ts">
-    import { Button, Column, ContextMenu, DataTable, DatePicker, IconField, InputIcon, InputText, Message, MultiSelect, Tag, Dialog } from 'primevue';
-    import { ref } from 'vue';
-    import { FilterMatchMode, FilterOperator } from '@primevue/core/api';
-    import '../assets/style/work-items.css'
-    import { getTypeColor, getStateColor } from '@/data/formFields';
-    import { useFormCache } from '@/composables/useFormCache'
-    import AddNewItem from './AddNewItem.vue';
+import { Button, Column, ContextMenu, DataTable, DatePicker, IconField, InputIcon, InputText, Message, MultiSelect, Tag, Dialog } from 'primevue';
+import { ref } from 'vue';
+import { FilterMatchMode, FilterOperator } from '@primevue/core/api';
+import '../assets/style/work-items.css'
+import { getTypeColor, getStateColor } from '@/data/formFields';
+import { useFormCache } from '@/composables/useFormCache'
+import AddNewItem from './AddNewItem.vue';
 
-    const { cache: products, save, update, remove, clear } = useFormCache<Record<string, any>>('workItems')
+const { cache: products, save, update, remove, clear } = useFormCache<Record<string, any>>('workItems')
 
-    const columns = ref([
-        { field: 'id', header: 'Id' },
-        { field: 'type', header: 'Type' },
-        { field: 'title', header: 'Title' },
-        { field: 'state', header: 'State' },
-        { field: 'created', header: 'Created' },
-        { field: 'parent', header: 'Parent Id' },
-        { field: 'tags', header: 'Tags' },
-    ]);
+const columns = ref([
+    { field: 'id', header: 'Id' },
+    { field: 'type', header: 'Type' },
+    { field: 'title', header: 'Title' },
+    { field: 'state', header: 'State' },
+    { field: 'created', header: 'Created' },
+    { field: 'parent', header: 'Parent Id' },
+    { field: 'tags', header: 'Tags' },
+]);
 
-    // filters global and each column 
-    const filters = ref();
+// filters global and each column 
+const filters = ref();
 
-    const initFilters = () => {
-        filters.value = {
-            global: { value: null, matchMode: FilterMatchMode.CONTAINS },
-            id: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
-            title: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
-            type: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
-            state: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
-            tags: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
-            parent: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
-            created: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.DATE_IS }] },
-        };
+const initFilters = () => {
+    filters.value = {
+        global: { value: null, matchMode: FilterMatchMode.CONTAINS },
+        id: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
+        title: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
+        type: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
+        state: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
+        tags: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
+        parent: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
+        created: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.DATE_IS }] },
     };
+};
 
+initFilters();
+
+const clearFilter = () => {
     initFilters();
+    selectedColumns.value = [...columns.value]; // Reset to show all columns
+};
 
-    const clearFilter = () => {
-        initFilters();
-        selectedColumns.value = [...columns.value]; // Reset to show all columns
-    };
+// hide-show rows
+const selectedColumns = ref(columns.value);
 
-    // edit mode
-    const onCellEditComplete = (event: any) => {
-        let { data, newValue, field } = event;
+const onToggle = (val: any) => {
+    selectedColumns.value = columns.value.filter(col => val.includes(col));
+};
 
-        switch (field) {
-            default:
-                if (typeof newValue === 'string') {
-                    if (newValue.trim().length > 0) {
-                        data[field] = newValue;
-                    } else {
-                        event.preventDefault();
-                    }
-                } else if (newValue !== null && newValue !== undefined) {
-                    // Accept non-string valid data (e.g., Date, tags array)
-                    data[field] = newValue;
-                } else {
-                    event.preventDefault();
-                }
-                break;
-        }
-    };
+// reorder
+const onColReorder = () => {
+    console.log('Column reordered');
+};
+const onRowReorder = (event: any) => {
+    products.value = event.value;
+    console.log('Row reordered');
+};
 
-    // hide-show rows
-    const selectedColumns = ref(columns.value);
+// export to csv
+const dt = ref();
+const exportCSV = () => {
+    dt.value.exportCSV();
+};
 
-    const onToggle = (val: any) => {
-        selectedColumns.value = columns.value.filter(col => val.includes(col));
-    };
+// context menu right click
+const contextMenu = ref()
+const selectedRow = ref<Record<string, any> | null>(null)
 
-    // reorder
-    const onColReorder = () => {
-        console.log('Column reordered');
-    };
-    const onRowReorder = (event: any) => {
-        products.value = event.value;
-        console.log('Row reordered');
-    };
+const menuModel = ref([
+    { label: 'View', icon: 'pi pi-fw pi-search', command: () => viewRow(selectedRow.value) },
+    { label: 'Edit', icon: 'pi pi-fw pi-pen-to-square', command: () => editRow(selectedRow.value) },
+    { label: 'Delete', icon: 'pi pi-fw pi-times', command: () => deleteRow(selectedRow.value) }
+])
 
-    // export to csv
-    const dt = ref();
-    const exportCSV = () => {
-        dt.value.exportCSV();
-    };
+const onRowContextMenu = (event: any) => {
+    contextMenu.value.show(event.originalEvent);
+};
 
-    // context menu right click
-    const contextMenu = ref()
-    const selectedRow = ref<Record<string, any> | null>(null)
+const viewRow = (row: any) => {
+    console.log('Row viewed:', row)
+};
 
-    const menuModel = ref([
-        { label: 'View', icon: 'pi pi-fw pi-search', command: () => viewRow(selectedRow.value) },
-        { label: 'Edit', icon: 'pi pi-fw pi-pen-to-square', command: () => editRow(selectedRow.value) },
-        { label: 'Delete', icon: 'pi pi-fw pi-times', command: () => deleteRow(selectedRow.value) }
-    ])
+const editRow = (row: any) => {
+    console.log('Row edited:', row)
+};
 
-    const onRowContextMenu = (event: any) => {
-        contextMenu.value.show(event.originalEvent);
-    };
-
-    const viewRow = (row: any) => {
-        console.log('Row viewed:', row)
-    };
-
-    const editRow = (row: any) => {
-        console.log('Row edited:', row)
-    };
-
-    const deleteRow = async (row: any) => {
-        if (!row?.id) return
-        try {
-            await remove(row.id) // persists to localStorage and rebuilds cache
-            console.log('Row deleted:', row.title)
-            selectedRow.value = null
-        } catch (e) {
-            console.error('Failed to delete row', e)
-        }
+const deleteRow = async (row: any) => {
+    if (!row?.id) return
+    try {
+        await remove(row.id) // persists to localStorage and rebuilds cache
+        console.log('Row deleted:', row.title)
+        selectedRow.value = null
+    } catch (e) {
+        console.error('Failed to delete row', e)
     }
+}
 
-    let visibleAddNewModal = ref(false);
-    const addNewItem = () => {
-        visibleAddNewModal.value = true;
-    };
-
+let visibleAddNewModal = ref(false);
+const addNewItem = () => {
+    visibleAddNewModal.value = true;
+};
 </script>
 
 <template>
@@ -139,15 +116,14 @@
             paginator :rows="15" :rowsPerPageOptions="[15, 25, 50, 75, 100]" 
             tableStyle="min-width: 50rem"
             v-model:filters="filters" filterDisplay="menu" :globalFilterFields="['title', 'type', 'state', 'tags','created','id','parent']"
-            editMode="cell" @cell-edit-complete="onCellEditComplete"
-                :pt="{
-                    table: { style: 'min-width: 50rem' },
-                    column: {
-                        bodycell: ({ state }: { state: Record<string, any> }) => ({
-                            class: [{ '!py-0': state['d_editing'] }]
-                        })
-                    }
-                }"
+            :pt="{
+                table: { style: 'min-width: 50rem' },
+                column: {
+                    bodycell: ({ state }: { state: Record<string, any> }) => ({
+                        class: [{ '!py-0': state['d_editing'] }]
+                    })
+                }
+            }"
         >
             <template #header>
                 <div class="wi__header-toolbar">
@@ -170,14 +146,6 @@
             </template>
             <Column rowReorder headerStyle="width: 3rem" :reorderableColumn="false" />
             <Column v-for="(col, index) of selectedColumns" :key="col.field + '_' + index" :field="col.field" :header="col.header" sortable>
-                <template #editor="{ data }">
-                    <template v-if="col.field !== 'created'">
-                        <InputText v-model="data[col.field]" autofocus fluid />
-                    </template>
-                    <template v-else>
-                        <DatePicker v-model="data[col.field]" autofocus fluid />
-                    </template>
-                </template>
                 <template #body="{ data }">
                     <template v-if="col.field === 'type'">
                         <Message size="small" :severity="getTypeColor(data[col.field])" :closable="false" variant="simple">
