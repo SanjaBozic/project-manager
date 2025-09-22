@@ -1,57 +1,69 @@
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
-import { Form } from '@primevue/forms'
-import { Button } from 'primevue'
-import FormColumn from './FormColumn.vue'
-import { LEFT_FIELDS, DETAILS_FIELDS } from '@/data/formFields'
-import type { FieldDef } from '@/data/formFields'
-import '@/assets/style/form.css'
-import { useFormCache } from '@/composables/useFormCache'
+  import { ref, reactive } from 'vue'
+  import { Form } from '@primevue/forms'
+  import { Button } from 'primevue'
+  import FormColumn from './FormColumn.vue'
+  import { LEFT_FIELDS, DETAILS_FIELDS } from '@/data/formFields'
+  import type { FieldDef } from '@/data/formFields'
+  import '@/assets/style/form.css'
+  import { useFormCache } from '@/composables/useFormCache'
 
-defineProps<{
-  visible: boolean
-}>()
+  // props & emits
+  const props = defineProps<{
+    visible: boolean
+    save: (values: Record<string, any>) => Promise<Record<string, any> | void>
+    items?: Array<Record<string, any>>
+  }>()
 
-const leftFields = ref([...LEFT_FIELDS])
-const detailsFields = ref([...DETAILS_FIELDS])
-const fields: FieldDef[] = [...leftFields.value, ...detailsFields.value]
+  const emit = defineEmits<{
+    (e: 'update:visible', value: boolean): void
+  }>()
 
-const optionalKeys = new Set(fields.filter(f => f.optional).map(f => f.key))
-const readonlyKeys = new Set(fields.filter(f => f.readonly).map(f => f.key))
-const fullWidthKeys = new Set(fields.filter(f => f.fullWidth).map(f => f.key))
+  // fallback to a local composable instance if parent didn't pass save
+  const fallback = useFormCache<Record<string, any>>('workItems')
+  const saveFn = props.save ?? fallback.save
 
-const today = new Date().toISOString().slice(0, 10)
-const initialValues = reactive(Object.fromEntries(fields.map(f => [f.key, f.key === 'created' ? today : ''])))
+  // fields, initialValues
+  const leftFields = ref([...LEFT_FIELDS])
+  const detailsFields = ref([...DETAILS_FIELDS])
+  const fields: FieldDef[] = [...leftFields.value, ...detailsFields.value]
 
-const validation = ({ values }: any) => {
-  const errors: Record<string, any> = {}
-  for (const key in values) {
-    const val = values[key]
-    const empty = val === '' || val === null || (Array.isArray(val) && val.length === 0)
-    if (!optionalKeys.has(key) && empty) {
-      const field = fields.find(f => f.key === key)
-      errors[key] = [{ message: `${field?.label ?? key} is required.` }]
+  const optionalKeys = new Set(fields.filter(f => f.optional).map(f => f.key))
+  const readonlyKeys = new Set(fields.filter(f => f.readonly).map(f => f.key))
+  const fullWidthKeys = new Set(fields.filter(f => f.fullWidth).map(f => f.key))
+
+  const today = new Date().toISOString().slice(0, 10)
+  const initialValues = reactive(Object.fromEntries(fields.map(f => [f.key, f.key === 'created' ? today : ''])))
+
+  // validation
+  const validation = ({ values }: any) => {
+    const errors: Record<string, any> = {}
+    for (const key in values) {
+      const val = values[key]
+      const empty = val === '' || val === null || (Array.isArray(val) && val.length === 0)
+      if (!optionalKeys.has(key) && empty) {
+        const field = fields.find(f => f.key === key)
+        errors[key] = [{ message: `${field?.label ?? key} is required.` }]
+      }
+    }
+    return { values, errors }
+  }
+
+  // Use the passed save prop
+  const onFormSave = async ({ valid, values }: { valid: boolean; values: Record<string, any> }) => {
+    if (!valid) return
+
+    try {
+      await saveFn(values) // await parent save or fallback save
+      emit('update:visible', false) // close the dialog
+    } catch (e) {
+      console.error('Save failed', e)
     }
   }
-  return { values, errors }
-}
 
-const { save: saveToCache } = useFormCache<Record<string, any>>('workItems')
-const emit = defineEmits<{
-  (e: 'update:visible', value: boolean): void
-}>()
-
-const onFormSave = ({ valid, values }: { valid: boolean; values: Record<string, any> }) => {
-  if (!valid) return
-
-  saveToCache(values)
-  console.log('Saved to cache:', values)
-  emit('update:visible', false) // close the dialog
-}
-
-const onFormCancel = () => {
-  emit('update:visible', false) // close the dialog
-}
+  const onFormCancel = () => {
+    emit('update:visible', false)
+  }
 </script>
 
 <template>

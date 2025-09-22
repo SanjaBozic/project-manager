@@ -7,7 +7,7 @@
     import { useFormCache } from '@/composables/useFormCache'
     import AddNewItem from './AddNewItem.vue';
 
-    const { cache: products } = useFormCache<Record<string, any>>('workItems')
+    const { cache: products, save, update, remove, clear } = useFormCache<Record<string, any>>('workItems')
 
     const columns = ref([
         { field: 'id', header: 'Id' },
@@ -65,7 +65,6 @@
         }
     };
 
-
     // hide-show rows
     const selectedColumns = ref(columns.value);
 
@@ -119,10 +118,10 @@
 </script>
 
 <template>
-    <AddNewItem v-model:visible="visibleAddNewModal" />
+    <AddNewItem v-model:visible="visibleAddNewModal" :items="products" :save="save" :update="update" :remove="remove" :clear="clear"/>
     <div class="card">
         <ContextMenu ref="contextMenu" :model="menuModel" @hide="selectedRow = null" />
-        <DataTable  ref="dt"  :value="products" dataKey="id" 
+        <DataTable  ref="dt" :value="products" dataKey="id" 
             v-model:contextMenuSelection="selectedRow" contextMenu @row-contextmenu="onRowContextMenu" 
             :reorderableColumns="true" @columnReorder="onColReorder" @rowReorder="onRowReorder" 
             :size="'small'" 
