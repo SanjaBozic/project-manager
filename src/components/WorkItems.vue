@@ -20,7 +20,6 @@
     ]);
 
     // filters global and each column 
-
     const filters = ref();
 
     const initFilters = () => {
@@ -93,6 +92,7 @@
 
     const menuModel = ref([
         { label: 'View', icon: 'pi pi-fw pi-search', command: () => viewRow(selectedRow.value) },
+        { label: 'Edit', icon: 'pi pi-fw pi-pen-to-square', command: () => editRow(selectedRow.value) },
         { label: 'Delete', icon: 'pi pi-fw pi-times', command: () => deleteRow(selectedRow.value) }
     ])
 
@@ -101,13 +101,22 @@
     };
 
     const viewRow = (row: any) => {
-    console.log('Row viewed:', row)
-    }
+        console.log('Row viewed:', row)
+    };
 
-    const deleteRow = (row: any) => {
-    products.value = products.value.filter((p) => p.id !== row.id)
-    console.log('Row deleted:', row.title)
-    selectedRow.value = null
+    const editRow = (row: any) => {
+        console.log('Row edited:', row)
+    };
+
+    const deleteRow = async (row: any) => {
+        if (!row?.id) return
+        try {
+            await remove(row.id) // persists to localStorage and rebuilds cache
+            console.log('Row deleted:', row.title)
+            selectedRow.value = null
+        } catch (e) {
+            console.error('Failed to delete row', e)
+        }
     }
 
     let visibleAddNewModal = ref(false);

@@ -69,20 +69,8 @@
 <template>
   <Form v-slot="$form" :initialValues="initialValues" :resolver="validation" @submit="onFormSave">
     <div class="form__layout">
-      <FormColumn
-        title="Content"
-        :fields="leftFields"
-        :form="$form"
-        :fullWidthKeys="fullWidthKeys"
-        :readonlyKeys="readonlyKeys"
-      />
-      <FormColumn
-        title="Details"
-        :fields="detailsFields"
-        :form="$form"
-        :readonlyKeys="readonlyKeys"
-        layout="two-column"
-      />
+      <FormColumn title="Content" :fields="leftFields" :form="$form" :fullWidthKeys="fullWidthKeys" :readonlyKeys="readonlyKeys"/>
+      <FormColumn title="Details" :fields="detailsFields" :form="$form" :readonlyKeys="readonlyKeys" layout="two-column"/>
     </div>
     <div class="form__actions">
       <Button severity="secondary" label="Cancel" @click="onFormCancel"/>
