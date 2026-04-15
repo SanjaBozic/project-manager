@@ -1,11 +1,10 @@
 <script setup lang="ts">
-  import MainNavigation from "./components/MainNavigation.vue";
-  import WorkItems from "./components/WorkItems.vue";
+import MainNavigation from './components/MainNavigation.vue';
 </script>
 
 <template class="dark-mode">
   <div>
-      <MainNavigation />
-      <WorkItems />
+    <MainNavigation />
+    <router-view />
   </div>
 </template>
