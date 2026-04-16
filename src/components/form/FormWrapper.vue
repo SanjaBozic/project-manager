@@ -87,6 +87,8 @@
         :form="$form" 
         :fullWidthKeys="fullWidthKeys" 
         :readonlyKeys="props.isReadOnly ? new Set(fields.map(f => f.key)) : readonlyKeys"
+        :items="props.items"
+        :initialData="props.initialData"
       />
       <FormColumn 
         title="Details" 
@@ -94,6 +96,8 @@
         :form="$form"
         :readonlyKeys="props.isReadOnly ? new Set(fields.map(f => f.key)) : readonlyKeys"
         layout="two-column"
+        :items="props.items"
+        :initialData="props.initialData"
       />
     </div>
     <div class="form__actions">

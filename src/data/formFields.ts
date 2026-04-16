@@ -76,5 +76,5 @@ export const DETAILS_FIELDS: readonly FieldDef[] = [
     { key: 'remainingEffort', label: 'Remaining Effort', type: 'number', placeholder: 'Remaining Effort', optional: true },
     { key: 'priority', label: 'Priority', type: 'dropdown', placeholder: 'Priority', optional: true },
     { key: 'assignedTo', label: 'Assigned To', type: 'text', placeholder: 'Assigned To', optional: true },
-    { key: 'parentId', label: 'Parent Id', type: 'text', placeholder: 'Parent Id', optional: true }
+    { key: 'parentId', label: 'Parent Id', type: 'dropdown', placeholder: 'Parent Id', optional: true }
 ] as const;

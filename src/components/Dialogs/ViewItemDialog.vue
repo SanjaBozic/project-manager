@@ -5,6 +5,7 @@
   const props = defineProps<{
     visible: boolean
     rowData: Record<string, any> | null
+    items?: Array<Record<string, any>>
   }>()
 
   const emit = defineEmits<{
@@ -29,6 +30,7 @@
         :save="dummySave" 
         :isReadOnly="true"
         :initialData="rowData"
+        :items="props.items"
       />
     </Dialog>
   </div>

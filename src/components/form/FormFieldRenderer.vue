@@ -7,13 +7,20 @@ import FieldError from './FieldError.vue'
 import { TYPES, STATES, ACTIVITY_OPTIONS, PRIORITY_OPTIONS, TAG_OPTIONS } from '@/data/formFields'
 import type { FieldDef } from '@/data/formFields'
 
-const { field, form, readonlyKeys } = defineProps<{
+const { field, form, readonlyKeys, items, initialData } = defineProps<{
   field: FieldDef
   form: Record<string, any>
   readonlyKeys?: Set<string>
+  items?: Array<Record<string, any>>
+  initialData?: Record<string, any> | null
 }>()
 
 const isMultiSelect = computed(() => field.type === 'dropdown' && field.multiple)
+
+const isParentIdDisabled = computed(() => {
+  if (field.key !== 'parentId') return false
+  return !items || items.length === 0
+})
 
 function getOptions(key: string): any[] {
   switch (key) {
@@ -22,6 +29,16 @@ function getOptions(key: string): any[] {
     case 'activity': return [...ACTIVITY_OPTIONS]
     case 'priority': return [...PRIORITY_OPTIONS]
     case 'tags': return [...TAG_OPTIONS]
+    case 'parentId': {
+      if (!items || items.length === 0) return []
+      const currentId = initialData?.id || null
+      return items
+        .filter((item: any) => item.id != null && item.id !== currentId)
+        .map((item: any) => ({ 
+          id: item.id, 
+          label: `${item.id} - ${item.title || 'Untitled'}`
+        }))
+    }
     default: return []
   }
 }
@@ -48,8 +65,10 @@ function getOptions(key: string): any[] {
       v-else-if="field.type === 'dropdown'"
       :name="field.key"
       :options="getOptions(field.key)"
+      :optionLabel="field.key === 'parentId' ? 'label' : undefined"
+      :optionValue="field.key === 'parentId' ? 'id' : undefined"
       :placeholder="field.placeholder"
-      :disabled="readonlyKeys?.has(field.key)"
+      :disabled="readonlyKeys?.has(field.key) || isParentIdDisabled"
       style="width: 100%"
     ></Select>
     <InputText

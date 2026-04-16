@@ -4,13 +4,15 @@ import FormFieldRenderer from './FormFieldRenderer.vue'
 import type { FieldDef } from '@/data/formFields'
 import '@/assets/style/form.css'
 
-const {title, fields, form, layout = 'single-column', fullWidthKeys, readonlyKeys} = defineProps<{
+const {title, fields, form, layout = 'single-column', fullWidthKeys, readonlyKeys, items, initialData} = defineProps<{
   title: string
   fields: FieldDef[]
   form: Record<string, any>
   layout?: 'single-column' | 'two-column'
   fullWidthKeys?: Set<string>
   readonlyKeys?: Set<string>
+  items?: Array<Record<string, any>>
+  initialData?: Record<string, any> | null
 }>()
 
 const layoutClass = computed(() =>
@@ -34,7 +36,7 @@ function getFieldClass(field: FieldDef) {
       <template v-for="field in fields" :key="field.key">
         <div :class="getFieldClass(field)">
           <div v-if="field.key === 'description'" class="form-column__description-label">Description</div>
-          <FormFieldRenderer :field="field" :form="form" :readonlyKeys="readonlyKeys" />
+          <FormFieldRenderer :field="field" :form="form" :readonlyKeys="readonlyKeys" :items="items" :initialData="initialData" />
         </div>
       </template>
     </div>

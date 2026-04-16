@@ -18,7 +18,7 @@ const columns = ref([
     { field: 'title', header: 'Title' },
     { field: 'state', header: 'State' },
     { field: 'created', header: 'Created' },
-    { field: 'parent', header: 'Parent Id' },
+    { field: 'parentId', header: 'Parent Id' },
     { field: 'tags', header: 'Tags' },
 ]);
 
@@ -33,7 +33,7 @@ const initFilters = () => {
         type: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
         state: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
         tags: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
-        parent: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
+        parentId: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
         created: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.DATE_IS }] },
     };
 };
@@ -123,8 +123,8 @@ const addNewItem = () => {
 
 <template>
     <AddNewItem v-model:visible="visibleAddNewModal" :items="products" :save="save" :update="update" :remove="remove" :clear="clear"/>
-    <ViewItemDialog v-model:visible="visibleViewModal" :rowData="viewedRow"/>
-    <EditItemDialog v-model:visible="visibleEditModal" :rowData="editedRow" :update="update"/>
+    <ViewItemDialog v-model:visible="visibleViewModal" :rowData="viewedRow" :items="products"/>
+    <EditItemDialog v-model:visible="visibleEditModal" :rowData="editedRow" :update="update" :items="products"/>
     <DeleteConfirmDialog v-model:visible="visibleDeleteModal" :rowData="rowToDelete" @confirm="confirmDelete"/>
     <div class="card">
         <ContextMenu ref="contextMenu" :model="menuModel" @hide="selectedRow = null" />
@@ -136,7 +136,7 @@ const addNewItem = () => {
             removableSort stripedRows 
             paginator :rows="15" :rowsPerPageOptions="[15, 25, 50, 75, 100]" 
             tableStyle="min-width: 50rem"
-            v-model:filters="filters" filterDisplay="menu" :globalFilterFields="['title', 'type', 'state', 'tags','created','id','parent']"
+            v-model:filters="filters" filterDisplay="menu" :globalFilterFields="['title', 'type', 'state', 'tags','created','id','parentId']"
             :pt="{
                 table: { style: 'min-width: 50rem' },
                 column: {

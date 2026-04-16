@@ -6,6 +6,7 @@
     visible: boolean
     rowData: Record<string, any> | null
     update: (id: string, patch: Partial<Record<string, any>>) => Promise<any>
+    items?: Array<Record<string, any>>
   }>()
 
   const emit = defineEmits<{
@@ -32,6 +33,7 @@
         @update:visible="emit('update:visible', $event)" 
         :save="handleUpdate" 
         :initialData="rowData"
+        :items="props.items"
       />
     </Dialog>
   </div>
