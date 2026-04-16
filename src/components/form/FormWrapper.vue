@@ -35,10 +35,13 @@
   const fullWidthKeys = new Set(fields.filter(f => f.fullWidth).map(f => f.key))
 
   const today = new Date().toISOString().slice(0, 10)
+  const currentYear = new Date().getFullYear().toString()
+  const defaultIteration = `${currentYear}/`
+  
   const initialValues = reactive(
     props.initialData 
       ? Object.fromEntries(fields.map(f => [f.key, props.initialData![f.key] ?? '']))
-      : Object.fromEntries(fields.map(f => [f.key, f.key === 'created' ? today : '']))
+      : Object.fromEntries(fields.map(f => [f.key, f.key === 'created' ? today : f.key === 'iteration' ? defaultIteration : '']))
   )
 
   // validation

@@ -18,6 +18,7 @@ const columns = ref([
     { field: 'title', header: 'Title' },
     { field: 'state', header: 'State' },
     { field: 'created', header: 'Created' },
+    { field: 'iteration', header: 'Iteration' },
     { field: 'parentId', header: 'Parent Id' },
     { field: 'tags', header: 'Tags' },
 ]);
@@ -34,6 +35,7 @@ const initFilters = () => {
         state: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
         tags: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
         parentId: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
+        iteration: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
         created: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.DATE_IS }] },
     };
 };
@@ -136,7 +138,7 @@ const addNewItem = () => {
             removableSort stripedRows 
             paginator :rows="15" :rowsPerPageOptions="[15, 25, 50, 75, 100]" 
             tableStyle="min-width: 50rem"
-            v-model:filters="filters" filterDisplay="menu" :globalFilterFields="['title', 'type', 'state', 'tags','created','id','parentId']"
+            v-model:filters="filters" filterDisplay="menu" :globalFilterFields="['title', 'type', 'state', 'tags','created','id','parentId','iteration']"
             :pt="{
                 table: { style: 'min-width: 50rem' },
                 column: {
