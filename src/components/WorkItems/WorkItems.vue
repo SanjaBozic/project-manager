@@ -5,7 +5,10 @@ import { FilterMatchMode, FilterOperator } from '@primevue/core/api';
 import '../../assets/style/work-items.css'
 import { getTypeColor, getStateColor } from '@/data/formFields';
 import { useFormCache } from '@/composables/useFormCache'
-import AddNewItem from '../AddNewItem.vue';
+import AddNewItem from '../Dialogs/AddNewItem.vue';
+import ViewItemDialog from '../Dialogs/ViewItemDialog.vue';
+import EditItemDialog from '../Dialogs/EditItemDialog.vue';
+import DeleteConfirmDialog from '../Dialogs/DeleteConfirmDialog.vue';
 
 const { cache: products, save, update, remove, clear } = useFormCache<Record<string, any>>('workItems')
 
@@ -79,25 +82,40 @@ const onRowContextMenu = (event: any) => {
 };
 
 const viewRow = (row: any) => {
-    console.log('Row viewed:', row)
+    viewedRow.value = row;
+    visibleViewModal.value = true;
 };
 
 const editRow = (row: any) => {
-    console.log('Row edited:', row)
+    editedRow.value = row;
+    visibleEditModal.value = true;
 };
 
 const deleteRow = async (row: any) => {
-    if (!row?.id) return
+    rowToDelete.value = row;
+    visibleDeleteModal.value = true;
+}
+
+const confirmDelete = async () => {
+    if (!rowToDelete.value?.id) return
     try {
-        await remove(row.id) // persists to localStorage and rebuilds cache
-        console.log('Row deleted:', row.title)
+        await remove(rowToDelete.value.id) // persists to localStorage and rebuilds cache
+        console.log('Row deleted:', rowToDelete.value.title)
         selectedRow.value = null
+        rowToDelete.value = null
     } catch (e) {
         console.error('Failed to delete row', e)
     }
 }
 
 let visibleAddNewModal = ref(false);
+let visibleViewModal = ref(false);
+let visibleEditModal = ref(false);
+let visibleDeleteModal = ref(false);
+let viewedRow = ref<Record<string, any> | null>(null);
+let editedRow = ref<Record<string, any> | null>(null);
+let rowToDelete = ref<Record<string, any> | null>(null);
+
 const addNewItem = () => {
     visibleAddNewModal.value = true;
 };
@@ -105,6 +123,9 @@ const addNewItem = () => {
 
 <template>
     <AddNewItem v-model:visible="visibleAddNewModal" :items="products" :save="save" :update="update" :remove="remove" :clear="clear"/>
+    <ViewItemDialog v-model:visible="visibleViewModal" :rowData="viewedRow"/>
+    <EditItemDialog v-model:visible="visibleEditModal" :rowData="editedRow" :update="update"/>
+    <DeleteConfirmDialog v-model:visible="visibleDeleteModal" :rowData="rowToDelete" @confirm="confirmDelete"/>
     <div class="card">
         <ContextMenu ref="contextMenu" :model="menuModel" @hide="selectedRow = null" />
         <DataTable  ref="dt" :value="products" dataKey="id" 

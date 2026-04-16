@@ -1,6 +1,6 @@
 <script setup lang="ts">
   import { Dialog } from 'primevue'
-  import FormWrapper from './form/FormWrapper.vue'
+  import FormWrapper from '../form/FormWrapper.vue'
 
   const props = defineProps<{
     visible: boolean
@@ -29,4 +29,3 @@
     </Dialog>
   </div>
 </template>
-

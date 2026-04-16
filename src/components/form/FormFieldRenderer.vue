@@ -42,6 +42,7 @@ function getOptions(key: string): any[] {
       v-else-if="field.type === 'editor'"
       :name="field.key"
       editorStyle="height: 260px"
+      :readonly="readonlyKeys?.has(field.key)"
     />
     <Select
       v-else-if="field.type === 'dropdown'"
@@ -56,7 +57,7 @@ function getOptions(key: string): any[] {
       :name="field.key"
       :type="field.type"
       :placeholder="field.placeholder"
-      :readonly="readonlyKeys?.has(field.key)"
+      :disabled="readonlyKeys?.has(field.key)"
       fluid
     />
   </FormField>
