@@ -124,6 +124,8 @@ const onRowCollapse = (event: any) => {
 // expand/collapse
 const expandedRows = ref({});
 
+const expandNestedRows = ref({});
+
 const confirmDelete = async () => {
     if (!rowToDelete.value?.id) return;
     try {
@@ -134,6 +136,29 @@ const confirmDelete = async () => {
     } catch (e) {
         console.error('Failed to delete row', e);
     }
+};
+
+// Group items by parent ID within an iteration
+const groupItemsByParent = (items: any[]) => {
+    const childrenMap: Record<string, Array<Record<string, any>>> = {};
+    
+    // Build map of children grouped by parent ID
+    items.forEach(item => {
+        if (item.parentId) {
+            if (!childrenMap[item.parentId]) {
+                childrenMap[item.parentId] = [];
+            }
+            childrenMap[item.parentId].push(item);
+        }
+    });
+    
+    // Get top-level items (no parent) and add their children
+    return items
+        .filter(item => !item.parentId)
+        .map(item => ({
+            ...item,
+            children: childrenMap[item.id] || [],
+        }));
 };
 </script>
 
@@ -190,7 +215,7 @@ const confirmDelete = async () => {
             </template>
             <Column expander style="width: 3rem" />
             <Column field="iteration" header="Iteration" sortable></Column>
-            <Column field="nrOfItems" header="Number of Items" sortable>
+            <Column field="children" header="Number of Items" sortable>
                 <template #body="{ data }">
                     {{ data.items.length }}
                 </template>
@@ -199,8 +224,9 @@ const confirmDelete = async () => {
             <template #expansion="slotProps">
                 <div class="p-4">
                     <DataTable 
-                        :value="slotProps.data.items"
+                        :value="groupItemsByParent(slotProps.data.items)"
                         dataKey="id"
+                        v-model:expandedRows="expandNestedRows"
                         v-model:contextMenuSelection="selectedRow" 
                         contextMenu 
                         @row-contextmenu="onRowContextMenu"
@@ -225,6 +251,7 @@ const confirmDelete = async () => {
                         }"
                     >
                         <template #empty> No items for this iteration. </template>
+                        <Column expander style="width: 3rem" />
                         <Column v-for="(col, index) of selectedColumns" :key="col.field + '_' + index" :field="col.field" :header="col.header" sortable>
                             <template #body="{ data }">
                                 <template v-if="col.field === 'type'">
@@ -253,6 +280,61 @@ const confirmDelete = async () => {
                                 <InputText v-model="filterModel.value" type="text" placeholder="Search ..." />
                             </template>
                         </Column>
+                        <Column field="children" header="Number of Children" sortable>
+                            <template #body="{ data }">
+                                {{ data.children.length }}
+                            </template>
+                        </Column>
+                        <template #expansion="childSlotProps">
+                            <div class="p-4">
+                                <DataTable 
+                                    :value="childSlotProps.data.children"
+                                    dataKey="id"
+                                    v-model:contextMenuSelection="selectedRow"
+                                    contextMenu
+                                    @row-contextmenu="onRowContextMenu"
+                                    :size="'small'"
+                                    scrollable
+                                    removableSort
+                                    stripedRows
+                                    :pt="{
+                                        table: { style: 'min-width: 50rem' },
+                                        column: {
+                                            bodycell: ({ state }: { state: Record<string, any> }) => ({
+                                                class: [{ '!py-0': state['d_editing'] }]
+                                            })
+                                        }
+                                    }"
+                                >
+                                    <template #empty> No child items. </template>
+                                    <Column v-for="(col, index) of selectedColumns" :key="col.field + '_' + index" :field="col.field" :header="col.header" sortable>
+                                        <template #body="{ data }">
+                                            <template v-if="col.field === 'type'">
+                                                <Message size="small" :severity="getTypeColor(data[col.field])" :closable="false" variant="simple">
+                                                    {{ data[col.field] }}
+                                                </Message>
+                                            </template>
+                                            <template v-else-if="col.field === 'state'">
+                                                <Tag :severity="getStateColor(data[col.field])" :value="data[col.field]" />
+                                            </template>
+                                            <template v-else-if="col.field === 'tags'">
+                                                <span class="tag-wrap" style="display: flex; gap: 0.25rem; flex-wrap: wrap;">
+                                                    <Tag
+                                                        v-for="(tag, idx) in data[col.field]"
+                                                        :key="idx"
+                                                        severity="secondary"
+                                                        :value="tag"
+                                                    />
+                                                </span>
+                                            </template>
+                                            <template v-else>
+                                                {{ data[col.field] }}
+                                            </template>
+                                        </template>
+                                    </Column>
+                                </DataTable>
+                            </div>
+                        </template>
                     </DataTable>
                 </div>
             </template>
