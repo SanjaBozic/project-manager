@@ -1,10 +1,13 @@
 <script setup lang="ts">
 import { Button, Column, ContextMenu, DataTable, DatePicker, IconField, InputIcon, InputText, Message, MultiSelect, Tag, Dialog } from 'primevue';
 import { ref } from 'vue';
-import { FilterMatchMode, FilterOperator } from '@primevue/core/api';
 import '../../assets/style/work-items.css'
 import { getTypeColor, getStateColor } from '@/data/formFields';
 import { useFormCache } from '@/composables/useFormCache'
+import { useTableDialogs } from '@/composables/useTableDialogs';
+import { useContextMenu } from '@/composables/useContextMenu';
+import { useTableFilters } from '@/composables/useTableFilters';
+import { useTableExport } from '@/composables/useTableExport';
 import AddNewItem from '../Dialogs/AddNewItem.vue';
 import ViewItemDialog from '../Dialogs/ViewItemDialog.vue';
 import EditItemDialog from '../Dialogs/EditItemDialog.vue';
@@ -24,27 +27,14 @@ const columns = ref([
 ]);
 
 // filters global and each column 
-const filters = ref();
+const filterFields = ['id', 'title', 'type', 'state', 'tags', 'parentId', 'iteration', 'created'];
+const { filters, initFilters: initFiltersComposable, clearFilters } = useTableFilters(columns);
 
-const initFilters = () => {
-    filters.value = {
-        global: { value: null, matchMode: FilterMatchMode.CONTAINS },
-        id: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
-        title: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
-        type: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
-        state: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
-        tags: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
-        parentId: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
-        iteration: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
-        created: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.DATE_IS }] },
-    };
-};
-
-initFilters();
+initFiltersComposable(filterFields);
 
 const clearFilter = () => {
-    initFilters();
-    selectedColumns.value = [...columns.value]; // Reset to show all columns
+    clearFilters(filterFields);
+    selectedColumns.value = [...columns.value];
 };
 
 // hide-show rows
@@ -64,62 +54,42 @@ const onRowReorder = (event: any) => {
 };
 
 // export to csv
-const dt = ref();
+const { dt, generateCSV } = useTableExport();
 const exportCSV = () => {
-    dt.value.exportCSV();
+    generateCSV(products.value, columns.value, columns.value.map((c: any) => c.field), 'WorkItems.csv');
 };
 
-// context menu right click
-const contextMenu = ref()
-const selectedRow = ref<Record<string, any> | null>(null)
+// context menu and dialogs
+const {
+    visibleAddNewModal,
+    visibleViewModal,
+    visibleEditModal,
+    visibleDeleteModal,
+    viewedRow,
+    editedRow,
+    rowToDelete,
+    openAddDialog,
+    openViewDialog,
+    openEditDialog,
+    openDeleteDialog,
+} = useTableDialogs();
 
-const menuModel = ref([
-    { label: 'View', icon: 'pi pi-fw pi-search', command: () => viewRow(selectedRow.value) },
-    { label: 'Edit', icon: 'pi pi-fw pi-pen-to-square', command: () => editRow(selectedRow.value) },
-    { label: 'Delete', icon: 'pi pi-fw pi-times', command: () => deleteRow(selectedRow.value) }
-])
-
-const onRowContextMenu = (event: any) => {
-    contextMenu.value.show(event.originalEvent);
-};
-
-const viewRow = (row: any) => {
-    viewedRow.value = row;
-    visibleViewModal.value = true;
-};
-
-const editRow = (row: any) => {
-    editedRow.value = row;
-    visibleEditModal.value = true;
-};
-
-const deleteRow = async (row: any) => {
-    rowToDelete.value = row;
-    visibleDeleteModal.value = true;
-}
+const { contextMenu, selectedRow, menuModel, onRowContextMenu, clearSelection } = useContextMenu(
+    openViewDialog,
+    openEditDialog,
+    openDeleteDialog
+);
 
 const confirmDelete = async () => {
-    if (!rowToDelete.value?.id) return
+    if (!rowToDelete.value?.id) return;
     try {
-        await remove(rowToDelete.value.id) // persists to localStorage and rebuilds cache
-        console.log('Row deleted:', rowToDelete.value.title)
-        selectedRow.value = null
-        rowToDelete.value = null
+        await remove(rowToDelete.value.id);
+        console.log('Row deleted:', rowToDelete.value.title);
+        clearSelection();
+        rowToDelete.value = null;
     } catch (e) {
-        console.error('Failed to delete row', e)
+        console.error('Failed to delete row', e);
     }
-}
-
-let visibleAddNewModal = ref(false);
-let visibleViewModal = ref(false);
-let visibleEditModal = ref(false);
-let visibleDeleteModal = ref(false);
-let viewedRow = ref<Record<string, any> | null>(null);
-let editedRow = ref<Record<string, any> | null>(null);
-let rowToDelete = ref<Record<string, any> | null>(null);
-
-const addNewItem = () => {
-    visibleAddNewModal.value = true;
 };
 </script>
 
@@ -129,7 +99,7 @@ const addNewItem = () => {
     <EditItemDialog v-model:visible="visibleEditModal" :rowData="editedRow" :update="update" :items="products"/>
     <DeleteConfirmDialog v-model:visible="visibleDeleteModal" :rowData="rowToDelete" @confirm="confirmDelete"/>
     <div class="card">
-        <ContextMenu ref="contextMenu" :model="menuModel" @hide="selectedRow = null" />
+        <ContextMenu ref="contextMenu" :model="menuModel" @hide="clearSelection" />
         <DataTable  ref="dt" :value="products" dataKey="id" 
             v-model:contextMenuSelection="selectedRow" contextMenu @row-contextmenu="onRowContextMenu" 
             :reorderableColumns="true" @columnReorder="onColReorder" @rowReorder="onRowReorder" 
@@ -152,7 +122,7 @@ const addNewItem = () => {
                 <div class="wi__header-toolbar">
                     <MultiSelect :modelValue="selectedColumns" :options="columns" optionLabel="header" @update:modelValue="onToggle" display="chip" placeholder="Select Columns" />
                     <div class="wi__header-toolbar--right">
-                        <Button type="button" icon="pi pi-plus" label="Add" variant="outlined" severity="info" @click="addNewItem()" ></Button>
+                        <Button type="button" icon="pi pi-plus" label="Add" variant="outlined" severity="info" @click="openAddDialog()" ></Button>
                         <Button type="button" icon="pi pi-filter-slash" label="Clear" variant="outlined" @click="clearFilter()" ></Button>
                         <IconField>
                             <InputIcon>
