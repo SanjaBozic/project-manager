@@ -49,15 +49,20 @@ const groupedByIteration = computed(() => {
 
 // filters global and each column 
 const filterFields = ['id', 'title', 'type', 'state', 'tags', 'parentId', 'iteration', 'created'];
-const nestedFilterFields = ['id', 'title', 'type', 'state', 'tags', 'parentId', 'created'];
+const firstLevelFilterFields = ['id', 'title', 'type', 'state', 'tags', 'parentId', 'created'];
+const secondLevelFilterFields = ['id', 'title', 'type', 'state', 'tags', 'parentId', 'created'];
 const { filters, initFilters: initFiltersComposable, clearFilters } = useTableFilters(columns);
-const { filters: nestedFilters, initFilters: initNestedFiltersComposable } = useTableFilters(columns);
+const { filters: firstLevelFilters, initFilters: initFirstLevelFiltersComposable, clearFilters: clearFirstLevelFilters } = useTableFilters(columns);
+const { filters: secondLevelFilters, initFilters: initSecondLevelFiltersComposable, clearFilters: clearSecondLevelFilters } = useTableFilters(columns);
 
 initFiltersComposable(filterFields);
-initNestedFiltersComposable(nestedFilterFields);
+initFirstLevelFiltersComposable(firstLevelFilterFields);
+initSecondLevelFiltersComposable(secondLevelFilterFields);
 
 const clearFilter = () => {
     clearFilters(filterFields);
+    clearFirstLevelFilters(firstLevelFilterFields);
+    clearSecondLevelFilters(secondLevelFilterFields);
     selectedColumns.value = [...columns.value];
 };
 
@@ -264,7 +269,7 @@ const groupItemsByParent = (items: any[]) => {
                         paginator 
                         :rows="10" 
                         :rowsPerPageOptions="[5, 10, 25, 50]"
-                        v-model:filters="nestedFilters" 
+                        v-model:filters="firstLevelFilters" 
                         filterDisplay="menu" 
                         :globalFilterFields="['id', 'title', 'type', 'state', 'tags', 'created', 'parentId']"
                         :pt="{
@@ -278,7 +283,7 @@ const groupItemsByParent = (items: any[]) => {
                     >
                         <template #empty> No items for this iteration. </template>
                         <Column expander style="width: 3rem" />
-                        <Column v-for="(col, index) of selectedColumns" :key="col.field + '_' + index" :field="col.field" :header="col.header" sortable>
+                        <Column v-for="(col, index) of selectedColumns" :key="col.field + '_' + index" :field="col.field" :header="col.header" sortable filterField="col.field">
                             <template #body="{ data }">
                                 <template v-if="col.field === 'type'">
                                     <Message size="small" :severity="getTypeColor(data[col.field])" :closable="false" variant="simple">
@@ -323,6 +328,9 @@ const groupItemsByParent = (items: any[]) => {
                                     scrollable
                                     removableSort
                                     stripedRows
+                                    v-model:filters="secondLevelFilters" 
+                                    filterDisplay="menu"
+                                    :globalFilterFields="['id', 'title', 'type', 'state', 'tags', 'created', 'parentId']"
                                     :pt="{
                                         table: { style: 'min-width: 50rem' },
                                         column: {
@@ -356,6 +364,9 @@ const groupItemsByParent = (items: any[]) => {
                                             <template v-else>
                                                 {{ data[col.field] }}
                                             </template>
+                                        </template>
+                                        <template #filter="{ filterModel }">
+                                            <InputText v-model="filterModel.value" type="text" placeholder="Search ..." />
                                         </template>
                                     </Column>
                                 </DataTable>
