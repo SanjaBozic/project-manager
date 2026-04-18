@@ -102,17 +102,6 @@ const { contextMenu, selectedRow, menuModel, onRowContextMenu, clearSelection } 
     openDeleteDialog
 );
 
-const expandAll = () => {
-    expandedRows.value = groupedByIteration.value.reduce((acc, group) => {
-        acc[group.id] = true;
-        return acc;
-    }, {} as Record<string, boolean>);
-};
-
-const collapseAll = () => {
-    expandedRows.value = {};
-};
-
 const onRowExpand = (event: any) => {
     console.log('Iteration expanded:', event.data.iteration);
 };
@@ -125,6 +114,43 @@ const onRowCollapse = (event: any) => {
 const expandedRows = ref({});
 
 const expandNestedRows = ref({});
+
+// Track expansion state for toggle functionality
+const isFirstLevelExpanded = ref(false);
+const isSecondLevelExpanded = ref(false);
+
+const expandAll = () => {
+    if (!isFirstLevelExpanded.value) {
+        // First click: expand all iterations (first level)
+        expandedRows.value = groupedByIteration.value.reduce((acc, group) => {
+            acc[group.id] = true;
+            return acc;
+        }, {} as Record<string, boolean>);
+        isFirstLevelExpanded.value = true;
+    } else if (!isSecondLevelExpanded.value) {
+        // Second click: expand all nested items (second level)
+        const nestedItems: Record<string, boolean> = {};
+        groupedByIteration.value.forEach(group => {
+            groupItemsByParent(group.items).forEach((item: any) => {
+                nestedItems[item.id] = true;
+            });
+        });
+        expandNestedRows.value = nestedItems;
+        isSecondLevelExpanded.value = true;
+    }
+};
+
+const collapseAll = () => {
+    if (isSecondLevelExpanded.value) {
+        // First click: collapse nested items (second level)
+        expandNestedRows.value = {};
+        isSecondLevelExpanded.value = false;
+    } else if (isFirstLevelExpanded.value) {
+        // Second click: collapse iterations (first level)
+        expandedRows.value = {};
+        isFirstLevelExpanded.value = false;
+    }
+};
 
 const confirmDelete = async () => {
     if (!rowToDelete.value?.id) return;
@@ -280,7 +306,7 @@ const groupItemsByParent = (items: any[]) => {
                                 <InputText v-model="filterModel.value" type="text" placeholder="Search ..." />
                             </template>
                         </Column>
-                        <Column field="children" header="Number of Children" sortable>
+                        <Column field="children" header="Number of Items" sortable>
                             <template #body="{ data }">
                                 {{ data.children.length }}
                             </template>
