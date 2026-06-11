@@ -1,7 +1,7 @@
 <script setup lang="ts">
-  import { ref, reactive } from 'vue'
+  import { ref, reactive, watch, computed } from 'vue'
   import { Form } from '@primevue/forms'
-  import { Button } from 'primevue'
+  import { Button, Badge } from 'primevue'
   import FormColumn from './FormColumn.vue'
   import { LEFT_FIELDS, DETAILS_FIELDS } from '@/data/formFields'
   import type { FieldDef } from '@/data/formFields'
@@ -12,6 +12,7 @@
   const props = defineProps<{
     visible: boolean
     save: (values: Record<string, any>) => Promise<Record<string, any> | void>
+    update?: (id: string, patch: Partial<Record<string, any>>) => Promise<any>
     items?: Array<Record<string, any>>
     isReadOnly?: boolean
     initialData?: Record<string, any> | null
@@ -19,11 +20,19 @@
 
   const emit = defineEmits<{
     (e: 'update:visible', value: boolean): void
+    (e: 'open-child', payload: { row: Record<string, any>, readOnly: boolean }): void
   }>()
 
   // fallback to a local composable instance if parent didn't pass save
   const fallback = useFormCache<Record<string, any>>('workItems')
   const saveFn = props.save ?? fallback.save
+  const updateFn = props.update ?? fallback.update
+
+  const currentId = computed(() => props.initialData?.id ?? initialValues.id ?? null)
+  const children = computed(() => {
+    if (!props.items || !currentId.value) return []
+    return props.items.filter((it: any) => it.parentId === currentId.value)
+  })
 
   // fields, initialValues
   const leftFields = ref([...LEFT_FIELDS])
@@ -42,6 +51,27 @@
     props.initialData 
       ? Object.fromEntries(fields.map(f => [f.key, props.initialData![f.key] ?? '']))
       : Object.fromEntries(fields.map(f => [f.key, f.key === 'created' ? today : f.key === 'iteration' ? defaultIteration : '']))
+  )
+
+  // Watch for parentId changes and automatically update iteration to parent's iteration
+  const handleParentIdChange = (parentId: string, formObj?: Record<string, any>) => {
+    if (!parentId || !props.items || props.items.length === 0) return
+
+    const parentItem = props.items.find((item: any) => item.id === parentId)
+    if (parentItem && parentItem.iteration) {
+      initialValues.iteration = parentItem.iteration
+      // Also update the live form field value (PrimeVue form slot API)
+      if (formObj && formObj['iteration'] && typeof formObj['iteration'].value !== 'undefined') {
+        formObj['iteration'].value = parentItem.iteration
+      }
+    }
+  }
+
+  watch(
+    () => initialValues.parentId,
+    (newParentId) => {
+      handleParentIdChange(newParentId, initialValues)
+    }
   )
 
   // validation
@@ -92,6 +122,7 @@
         :readonlyKeys="props.isReadOnly ? new Set(fields.map(f => f.key)) : readonlyKeys"
         :items="props.items"
         :initialData="props.initialData"
+        :onParentIdChange="handleParentIdChange"
       />
       <FormColumn 
         title="Details" 
@@ -101,7 +132,22 @@
         layout="two-column"
         :items="props.items"
         :initialData="props.initialData"
-      />
+        :onParentIdChange="handleParentIdChange"
+      >
+        <template #after-fields>
+          <div v-if="children.length" class="form-column__children">
+            <h4 class="form-column__title">Children</h4>
+            <div class="form-column__children-list">
+              <div class="form-column__child-item" v-for="child in children" :key="child.id">
+                <Button variant="text" size="small" class="child-button" @click="emit('open-child', { row: child, readOnly: !!props.isReadOnly })">
+                  <span>{{ child.title || child.id }}</span>
+                  <Badge :value="child.id" severity="secondary" />
+                </Button>
+              </div>
+            </div>
+          </div>
+        </template>
+      </FormColumn>
     </div>
     <div class="form__actions">
       <Button severity="secondary" label="Cancel" @click="onFormCancel"/>

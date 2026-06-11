@@ -52,3 +52,21 @@
   font-weight: 600;
   color: #333;
 }
+
+.form-column__children{
+  margin-top: 1.5rem;
+}
+
+.form-column__children .form-column__children-list {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin: 0;
+  padding: 0;
+  max-height: 140px;
+  overflow-y: auto;
+}
+
+.form-column__children .form-column__child-item {
+  margin-bottom: 0.25rem;
+}

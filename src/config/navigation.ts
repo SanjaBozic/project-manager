@@ -3,12 +3,14 @@ import Dashboard from '@/components/Dashboard/Dashboard.vue'
 import WorkItems from '@/components/WorkItems/WorkItems.vue'
 import Backlogs from '@/components/Backlogs/Backlogs.vue'
 import Sprints from '@/components/Sprints/Sprints.vue'
+import Settings from '@/components/Settings/Settings.vue'
 
 export enum MenuKey {
   Dashboard = 'Dashboard',
   WorkItems = 'Work Items',
   Backlogs = 'Backlogs',
-  Sprints = 'Sprints'
+  Sprints = 'Sprints',
+  Settings = 'Settings'
 }
 
 export interface NavigationItem {
@@ -47,6 +49,13 @@ export const NAVIGATION_CONFIG: readonly NavigationItem[] = [
     icon: 'pi pi-stop',
     to: '/sprints',
     component: Sprints
+  },
+  {
+    key: MenuKey.Settings,
+    label: MenuKey.Settings,
+    icon: 'pi pi-cog',
+    to: '/settings',
+    component: Settings
   }
 ] as const
 

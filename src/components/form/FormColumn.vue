@@ -4,7 +4,7 @@ import FormFieldRenderer from './FormFieldRenderer.vue'
 import type { FieldDef } from '@/data/formFields'
 import '@/assets/style/form.css'
 
-const {title, fields, form, layout = 'single-column', fullWidthKeys, readonlyKeys, items, initialData} = defineProps<{
+const {title, fields, form, layout = 'single-column', fullWidthKeys, readonlyKeys, items, initialData, onParentIdChange} = defineProps<{
   title: string
   fields: FieldDef[]
   form: Record<string, any>
@@ -13,6 +13,7 @@ const {title, fields, form, layout = 'single-column', fullWidthKeys, readonlyKey
   readonlyKeys?: Set<string>
   items?: Array<Record<string, any>>
   initialData?: Record<string, any> | null
+  onParentIdChange?: (parentId: string, formValues: Record<string, any>) => void
 }>()
 
 const layoutClass = computed(() =>
@@ -36,9 +37,10 @@ function getFieldClass(field: FieldDef) {
       <template v-for="field in fields" :key="field.key">
         <div :class="getFieldClass(field)">
           <div v-if="field.key === 'description'" class="form-column__description-label">Description</div>
-          <FormFieldRenderer :field="field" :form="form" :readonlyKeys="readonlyKeys" :items="items" :initialData="initialData" />
+          <FormFieldRenderer :field="field" :form="form" :readonlyKeys="readonlyKeys" :items="items" :initialData="initialData" :onParentIdChange="onParentIdChange" />
         </div>
       </template>
     </div>
+    <slot name="after-fields"></slot>
   </div>
 </template>
